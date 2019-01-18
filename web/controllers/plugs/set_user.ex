@@ -1,13 +1,17 @@
 defmodule Discuss.Plugs.SetUser do
     import Plug.Conn            # assign
-    # import Phoenix.Controller   # get_session
 
     alias Discuss.Repo
     alias Discuss.User
 
     def init(_params) do
-
     end
+
+    #--------------------------------------------------------------------------
+    # The 'signin' process in AuthController created a session with a user_id. 
+    # The purpose of this plug is to associate the session's user_id 
+    # with further user information from db (if the user exists).  
+    #--------------------------------------------------------------------------
 
     # 'params' is whatever is returned from the 'init' function.
     def call(conn, _params) do

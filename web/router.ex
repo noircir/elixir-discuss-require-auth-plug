@@ -28,8 +28,13 @@ defmodule Discuss.Router do
   scope "/auth", Discuss do
     pipe_through :browser
 
+    # /auth/signout  link on "Sign Out" button
     get "/signout", AuthController, :signout
+
+    # /auth/github  link on "Sign In with Github" button
     get "/:provider", AuthController, :request
+    
+    # /github/callback link required by Ueberauth
     get "/:provider/callback", AuthController, :callback
   end
 
