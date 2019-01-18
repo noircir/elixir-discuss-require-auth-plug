@@ -5,6 +5,10 @@ defmodule Discuss.TopicController do
 
     #  Guard clause 'when' to restrict to specific actions
     plug Discuss.Plugs.RequireAuth when action in [:new, :create, :edit, :update, :delete]
+    
+    # A function plug: it will execute local function 'check_topic_owner'
+    # before specified functions
+    plug :check_topic_owner when action in [:update, :edit, :delete]
 
     def index(conn, _params) do 
         # IO.inspect(conn.assigns)
@@ -24,7 +28,14 @@ defmodule Discuss.TopicController do
 
     def create(conn, %{"topic" => topic}) do
         # IO.inspect(params)
-        changeset = Topic.changeset(%Topic{}, topic)
+
+        # conn.assigns[:user] is the same as conn.assigns.user
+
+        # changeset = Topic.changeset(%Topic{}, topic)
+
+        changeset = conn.assigns.user
+            |> build_assoc(:topics)
+            |> Topic.changeset(topic)
 
         case Repo.insert(changeset) do
             {:ok, _topic} -> 
@@ -64,4 +75,20 @@ defmodule Discuss.TopicController do
         |> redirect(to: topic_path(conn, :index))
     end
 
+    def check_topic_owner(conn, _params) do
+        # The 'resources' helper in TopicController (in router.ex)
+        # is going to automatically pull the ':id' out of the URL
+        # and attach it to the 'conn' object under the 'params' property.
+        %{params: %{"id" => topic_id}} = conn
+        
+        # if the user_id in the database is the same as the session user_id
+        if Repo.get(Topic, topic_id).user_id == conn.assigns.user.id do
+            conn
+        else
+            conn
+            |> put_flash(:error, "You cannot edit that")
+            |> redirect(to: topic_path(conn, :index))
+            |> halt()
+        end
+    end
 end
